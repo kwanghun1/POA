@@ -85,7 +85,7 @@ class Bithumb:
         buy_amount = self.get_amount(order_info)
         price = self.get_price(order_info.unified_symbol)
         total_price = price * buy_amount
-        split_count = max(1, round(total_price / 300000))+1
+        split_count = max(1, round(total_price / 100000))+1
         split_amount = buy_amount / split_count
 
         results = []
@@ -104,7 +104,7 @@ class Bithumb:
         sell_amount = self.get_amount(order_info)
         price = self.get_price(order_info.unified_symbol)
         total_price = price * sell_amount
-        split_count = max(1, round(total_price / 500000))+2
+        split_count = max(1, round(total_price / 150000))+2
         split_amount = sell_amount / split_count
 
         results = []
