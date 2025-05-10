@@ -81,26 +81,29 @@ class Bithumb:
         except Exception as e:
             raise error.OrderError(e, order_info)
 
-    async def market_buy(self, order_info: MarketOrder):
-        buy_amount = self.get_amount(order_info)
-        price = self.get_price(order_info.unified_symbol)
-        total_price = price * buy_amount
-        split_count = max(1, round(total_price / 300000))+1
-        split_amount = buy_amount / split_count
+    
+async def market_buy(self, order_info: MarketOrder):
+    buy_amount = self.get_amount(order_info)
+    price = order_info.price or self.get_price(order_info.unified_symbol)
 
-        results = []
+    order_info.amount = float(self.client.amount_to_precision(order_info.unified_symbol, buy_amount))
+    order_info.type = 'limit'
+    order_info.price = price
 
-        for _ in range(split_count):
-            order_info.amount = float(self.client.amount_to_precision(order_info.unified_symbol, split_amount))
-            order_info.price = price
-            result = self.market_order(order_info)
-            results.append(result)
-            if split_count > 1:
-                await asyncio.sleep(20)
+    result = self.market_order(order_info)
+    return [result]
 
-        return results
 
     async def market_sell(self, order_info: MarketOrder):
+        # 매수 미체결 주문 취소
+        open_orders = self.client.fetch_open_orders(order_info.unified_symbol)
+        for order in open_orders:
+            if order['side'] == 'buy':
+                try:
+                    self.client.cancel_order(order['id'], order_info.unified_symbol)
+                except Exception as e:
+                    print(f"매수 미체결 주문 취소 실패: {e}")
+
         sell_amount = self.get_amount(order_info)
         price = self.get_price(order_info.unified_symbol)
         total_price = price * sell_amount
